@@ -7,11 +7,26 @@ use App\Models\User;
 
 class DealPolicy
 {
+
+    /**
+     * Determine whether the user can view any deals.
+     *
+     * @param  User  $user  The authenticated user.
+     * @return bool  True if a tenant context is bound, false otherwise.
+     */
     public function viewAny(User $user): bool
     {
         return app()->bound('current.tenant');
     }
 
+
+    /**
+     * Determine whether the user can view a specific deal.
+     *
+     * @param  User $user The authenticated user.
+     * @param  Deal $deal The deal instance.
+     * @return bool  True if the deal belongs to the current tenant, aborts(404) if not.
+     */
     public function view(User $user, Deal $deal): bool
     {
         if (! app()->bound('current.tenant')) {
@@ -23,11 +38,26 @@ class DealPolicy
         return true;
     }
 
+
+    /**
+     * Determine whether the user can create a deal.
+     *
+     * @param  User  $user  The authenticated user.
+     * @return bool  True if a tenant context is bound, false otherwise.
+     */
     public function create(User $user): bool
     {
         return app()->bound('current.tenant');
     }
 
+
+    /**
+     * Determine whether the user can update a deal.
+     *
+     * @param  User $user The authenticated user.
+     * @param  Deal $deal The deal instance.
+     * @return bool  True if the deal belongs to the current tenant, aborts(404) if not.
+     */
     public function update(User $user, Deal $deal): bool
     {
         if (! app()->bound('current.tenant')) {
@@ -39,6 +69,15 @@ class DealPolicy
         return true;
     }
 
+
+    /**
+     * Determine whether the user can delete a deal.
+     * Only tenant owners or admins can delete.
+     *
+     * @param  User $user The authenticated user.
+     * @param  Deal $deal The deal instance.
+     * @return bool  True if the user is owner/admin and deal belongs to tenant, aborts(404) if not.
+     */
     public function delete(User $user, Deal $deal): bool
     {
         if (! app()->bound('current.tenant')) {
