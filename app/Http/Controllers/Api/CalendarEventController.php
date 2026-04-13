@@ -8,13 +8,17 @@ use App\Http\Requests\CalendarEvent\UpdateCalendarEventRequest;
 use App\Http\Resources\CalendarEventResource;
 use App\Models\CalendarEvent;
 use App\Services\CalendarEventService;
+use App\Services\InvoiceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class CalendarEventController extends Controller
 {
-    public function __construct(private CalendarEventService $calendarEventService) {}
+    public function __construct(
+        private CalendarEventService $calendarEventService,
+        private InvoiceService $invoiceService,
+    ) {}
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -53,5 +57,21 @@ class CalendarEventController extends Controller
         $this->authorize('delete', $calendarEvent);
         $this->calendarEventService->delete($calendarEvent);
         return response()->json(null, 204);
+    }
+
+    /**
+     * Generate and email a cryptographically signed PDF invoice
+     * for the deal linked to this calendar event.
+     */
+    public function sendInvoice(CalendarEvent $calendarEvent): JsonResponse
+    {
+        $this->authorize('view', $calendarEvent);
+
+        try {
+            $invoiceNumber = $this->invoiceService->sendInvoice($calendarEvent);
+            return response()->json(['message' => "Invoice {$invoiceNumber} sent successfully."]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
     }
 }

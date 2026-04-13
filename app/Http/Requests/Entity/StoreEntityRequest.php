@@ -15,7 +15,7 @@ class StoreEntityRequest extends EntityRequest
             'name'    => ['required', 'string', 'max:100'],
             'vat'     => ['nullable', 'string', 'max:14', 'regex:/^([A-Z]{2})([A-Z0-9]{8,12})$/'],
             'email'   => ['nullable', 'email', 'max:100'],
-            'phone'   => ['nullable', 'string', 'max:20', 'regex:/^\d+$/'],
+            'phone'   => ['nullable', 'string', 'max:20', 'regex:/^\+?(?:\d{2,3}\s?)+$/'],
             'address' => ['nullable', 'string', 'max:150'],
             'status'  => ['nullable', 'string', 'in:prospect,active,inactive,customer'],
         ];

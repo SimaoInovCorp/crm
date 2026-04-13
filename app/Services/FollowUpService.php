@@ -6,6 +6,7 @@ use App\Jobs\FollowUpEmailJob;
 use App\Models\Deal;
 use App\Models\EmailTemplate;
 use App\Models\FollowUpAutomation;
+use Illuminate\Support\Facades\Mail;
 
 class FollowUpService
 {
@@ -74,13 +75,27 @@ class FollowUpService
             return;
         }
 
-        // Log the send activity
+        // Actually send the email
         $emailNumber = $followUp->emails_sent + 1;
+        $recipient   = $deal->person?->email ?? $deal->entity?->email;
+
+        if ($recipient) {
+            $subject = $template->subject;
+            $body    = $template->body;
+
+            Mail::send([], [], function ($message) use ($recipient, $subject, $body) {
+                $message->to($recipient)
+                    ->subject($subject)
+                    ->html($body);
+            });
+        }
+
+        // Log the send activity
         $this->activityLogService->log(
             $deal,
             'email',
-            "Follow-up email #{$emailNumber} sent via template: {$template->name}",
-            ['template_id' => $template->id, 'template_name' => $template->name]
+            "Follow-up email #{$emailNumber} sent via template: {$template->name}" . ($recipient ? " to {$recipient}" : ''),
+            ['template_id' => $template->id, 'template_name' => $template->name, 'recipient' => $recipient]
         );
 
         $followUp->update([
@@ -96,6 +111,59 @@ class FollowUpService
         } else {
             $followUp->update(['status' => 'completed']);
         }
+    }
+
+    /**
+     * Immediately send the next follow-up email (optionally with a different template/body).
+     */
+    public function sendNow(Deal $deal, ?int $emailTemplateId = null, ?string $customBody = null): bool
+    {
+        $followUp         = $this->forDeal($deal);
+        $isActiveFollowUp = $followUp && $followUp->status === 'active';
+
+        // Determine the email template to use
+        $template = null;
+        if ($emailTemplateId) {
+            $template = EmailTemplate::find($emailTemplateId);
+        } elseif ($isActiveFollowUp) {
+            $template = $followUp->emailTemplate;
+        }
+
+        // No template means we cannot send
+        if (! $template) {
+            return false;
+        }
+
+        $deal->load('entity', 'person');
+        $recipient = $deal->person?->email ?? $deal->entity?->email;
+
+        if ($recipient) {
+            $body = $customBody ?? $template->body;
+
+            Mail::send([], [], function ($message) use ($recipient, $template, $body) {
+                $message->to($recipient)
+                    ->subject($template->subject)
+                    ->html($body);
+            });
+        }
+
+        $emailNumber = ($isActiveFollowUp ? $followUp->emails_sent : 0) + 1;
+        $this->activityLogService->log(
+            $deal,
+            'email',
+            "Email #{$emailNumber} sent immediately via template: {$template->name}" . ($recipient ? " to {$recipient}" : ' (no recipient email found)'),
+            ['template_id' => $template->id, 'template_name' => $template->name, 'recipient' => $recipient, 'manual' => true]
+        );
+
+        if ($isActiveFollowUp) {
+            $followUp->update([
+                'emails_sent'  => $followUp->emails_sent + 1,
+                'last_sent_at' => now(),
+                'next_send_at' => $this->nextSendTime(),
+            ]);
+        }
+
+        return true;
     }
 
     private function nextSendTime(): \DateTimeInterface

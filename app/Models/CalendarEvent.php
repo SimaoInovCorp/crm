@@ -16,25 +16,45 @@ class CalendarEvent extends Model
     protected $fillable = [
         'tenant_id',
         'owner_id',
+        'entity_id',
+        'person_id',
+        'deal_id',
         'title',
         'description',
         'location',
         'start_at',
         'end_at',
         'all_day',
+        'notify_person',
         'eventable_type',
         'eventable_id',
     ];
 
     protected $casts = [
-        'start_at' => 'datetime',
-        'end_at'   => 'datetime',
-        'all_day'  => 'boolean',
+        'start_at'      => 'datetime',
+        'end_at'        => 'datetime',
+        'all_day'       => 'boolean',
+        'notify_person' => 'boolean',
     ];
 
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function entity(): BelongsTo
+    {
+        return $this->belongsTo(Entity::class);
+    }
+
+    public function person(): BelongsTo
+    {
+        return $this->belongsTo(Person::class);
+    }
+
+    public function deal(): BelongsTo
+    {
+        return $this->belongsTo(Deal::class);
     }
 
     public function attendees(): HasMany

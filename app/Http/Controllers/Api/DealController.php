@@ -19,7 +19,7 @@ class DealController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Deal::class);
-        $deals = $this->dealService->index($request->only(['search', 'stage', 'owner_id']));
+        $deals = $this->dealService->index($request->only(['search', 'stage', 'owner_id', 'entity_id', 'person_id']));
         return DealResource::collection($deals);
     }
 

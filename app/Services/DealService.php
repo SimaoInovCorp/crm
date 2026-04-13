@@ -37,9 +37,11 @@ class DealService
     public function index(array $filters = []): LengthAwarePaginator
     {
         return Deal::with(['entity', 'person', 'owner'])
-            ->when(isset($filters['owner_id']), fn ($q) => $q->where('owner_id', $filters['owner_id']))
-            ->when(isset($filters['stage']),    fn ($q) => $q->where('stage', $filters['stage']))
-            ->when(isset($filters['search']),   fn ($q) => $q->where('title', 'like', '%'.$filters['search'].'%'))
+            ->when(isset($filters['owner_id']),  fn ($q) => $q->where('owner_id', $filters['owner_id']))
+            ->when(isset($filters['stage']),     fn ($q) => $q->where('stage', $filters['stage']))
+            ->when(isset($filters['search']),    fn ($q) => $q->where('title', 'like', '%'.$filters['search'].'%'))
+            ->when(isset($filters['entity_id']), fn ($q) => $q->where('entity_id', $filters['entity_id']))
+            ->when(isset($filters['person_id']), fn ($q) => $q->where('person_id', $filters['person_id']))
             ->paginate(20);
     }
 

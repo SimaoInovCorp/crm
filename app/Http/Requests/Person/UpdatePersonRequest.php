@@ -15,7 +15,7 @@ class UpdatePersonRequest extends PersonRequest
             'name'      => ['sometimes', 'required', 'string', 'max:100', 'regex:/^[\pL\s\-]+$/u'],
             'entity_id' => ['sometimes', 'nullable', 'integer', 'exists:entities,id'],
             'email'     => ['sometimes', 'nullable', 'email', 'max:100'],
-            'phone'     => ['sometimes', 'nullable', 'string', 'max:20', 'regex:/^\d+$/'],
+            'phone'     => ['sometimes', 'nullable', 'string', 'max:20', 'regex:/^\+?(?:\d{2,3}\s?)+$/'],
             'position'  => ['sometimes', 'nullable', 'string', 'max:100', 'regex:/^[\pL\s\-]+$/u'],
             'notes'     => ['sometimes', 'nullable', 'string', 'max:500'],
         ];
