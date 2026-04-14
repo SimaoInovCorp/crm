@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Mail;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EntityController extends Controller
 {
@@ -50,6 +51,16 @@ class EntityController extends Controller
         $this->authorize('delete', $entity);
         $this->entityService->delete($entity);
         return response()->json(null, 204);
+    }
+
+    /**
+     * GET /api/entities/export
+     * Stream all entities for the current tenant as a CSV file.
+     */
+    public function export(Request $request): StreamedResponse
+    {
+        $this->authorize('viewAny', Entity::class);
+        return $this->entityService->exportCsvStream($request->only(['search', 'status']));
     }
 
     public function sendEmail(Request $request, Entity $entity): JsonResponse

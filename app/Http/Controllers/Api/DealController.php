@@ -11,6 +11,7 @@ use App\Services\DealService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DealController extends Controller
 {
@@ -53,5 +54,17 @@ class DealController extends Controller
         $this->authorize('delete', $deal);
         $this->dealService->delete($deal);
         return response()->json(null, 204);
+    }
+
+    /**
+     * GET /api/deals/export
+     * Stream all deals for the current tenant as a CSV file.
+     */
+    public function export(Request $request): StreamedResponse
+    {
+        $this->authorize('viewAny', Deal::class);
+        return $this->dealService->exportCsvStream(
+            $request->only(['search', 'stage', 'owner_id', 'entity_id', 'date_from', 'date_to'])
+        );
     }
 }

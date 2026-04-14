@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Deal;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DealService
 {
@@ -91,5 +92,51 @@ class DealService
     public function delete(Deal $deal): void
     {
         $deal->delete();
+    }
+
+    /**
+     * Return all deals matching filters (no pagination) for CSV export.
+     */
+    public function exportAll(array $filters = []): \Illuminate\Database\Eloquent\Collection
+    {
+        return Deal::with(['entity:id,name', 'person:id,name', 'owner:id,name'])
+            ->when(isset($filters['owner_id']),  fn ($q) => $q->where('owner_id', $filters['owner_id']))
+            ->when(isset($filters['stage']),     fn ($q) => $q->where('stage', $filters['stage']))
+            ->when(isset($filters['search']),    fn ($q) => $q->where('title', 'like', '%'.$filters['search'].'%'))
+            ->when(isset($filters['entity_id']), fn ($q) => $q->where('entity_id', $filters['entity_id']))
+            ->when(isset($filters['date_from']), fn ($q) => $q->whereDate('expected_close_date', '>=', $filters['date_from']))
+            ->when(isset($filters['date_to']),   fn ($q) => $q->whereDate('expected_close_date', '<=', $filters['date_to']))
+            ->orderByDesc('created_at')
+            ->get();
+    }
+
+    /**
+     * Stream all deals as a CSV download (SOLID: column/row logic lives here, not in the controller).
+     */
+    public function exportCsvStream(array $filters = []): StreamedResponse
+    {
+        $deals = $this->exportAll($filters);
+
+        return response()->streamDownload(function () use ($deals) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBFsep=,\r\n");
+            fputcsv($out, ['ID', 'Title', 'Stage', 'Value (EUR)', 'Probability (%)', 'Entity', 'Contact', 'Owner', 'Close Date', 'Created At']);
+
+            foreach ($deals as $deal) {
+                fputcsv($out, [
+                    $deal->id,
+                    $deal->title,
+                    $deal->stage,
+                    number_format((float) $deal->value, 2, '.', ''),
+                    $deal->probability ?? '',
+                    $deal->entity?->name ?? '',
+                    $deal->person?->name ?? '',
+                    $deal->owner?->name ?? '',
+                    $deal->expected_close_date ?? '',
+                    $deal->created_at?->toDateString(),
+                ]);
+            }
+            fclose($out);
+        }, 'deals.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 }
