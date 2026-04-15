@@ -10,12 +10,13 @@ use App\Models\EmailTemplate;
 use App\Services\FollowUpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Request;
 
 class EmailTemplateController extends Controller
 {
     public function __construct(private FollowUpService $service) {}
 
-    public function index(): AnonymousResourceCollection
+    public function index(Request $request): AnonymousResourceCollection
     {
         return EmailTemplateResource::collection($this->service->templates());
     }

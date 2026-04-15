@@ -10,12 +10,13 @@ use App\Models\AutomationRule;
 use App\Services\AutomationRuleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Request;
 
 class AutomationRuleController extends Controller
 {
     public function __construct(private AutomationRuleService $service) {}
 
-    public function index(): AnonymousResourceCollection
+    public function index(Request $request): AnonymousResourceCollection
     {
         return AutomationRuleResource::collection($this->service->index());
     }

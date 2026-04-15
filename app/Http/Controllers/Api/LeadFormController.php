@@ -11,12 +11,13 @@ use App\Models\LeadForm;
 use App\Services\LeadFormService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Request;
 
 class LeadFormController extends Controller
 {
     public function __construct(private LeadFormService $service) {}
 
-    public function index(): AnonymousResourceCollection
+    public function index(Request $request): AnonymousResourceCollection
     {
         return LeadFormResource::collection($this->service->index());
     }

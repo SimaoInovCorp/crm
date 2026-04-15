@@ -9,7 +9,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DealService
 {
-    public function __construct(private ActivityLogService $activityLogService) {}
+    public function __construct(
+        private ActivityLogService $activityLogService,
+        private WebhookService $webhookService,
+    ) {}
 
     // Default probability per stage
     private const STAGE_PROBABILITY = [
@@ -85,6 +88,17 @@ class DealService
             "Stage changed from {$oldStage} to {$stage}",
             ['from' => $oldStage, 'to' => $stage]
         );
+
+        if ($stage === 'won') {
+            $deal->loadMissing(['entity', 'person', 'owner']);
+            $this->webhookService->dispatch('deal.won', [
+                'deal_id' => $deal->id,
+                'title'   => $deal->title,
+                'value'   => $deal->value,
+                'entity'  => $deal->entity?->name,
+                'owner'   => $deal->owner?->name,
+            ]);
+        }
 
         return $deal->fresh();
     }
