@@ -57,4 +57,15 @@ return [
     | needing API credits. Set OPENAI_MOCK=true in your .env file.
     */
     'mock' => env('OPENAI_MOCK', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | OpenAI Chat Model
+    |--------------------------------------------------------------------------
+    |
+    | The model to use for all Smart Chat and AI Sales Agent requests.
+    | Set OPENAI_MODEL in your .env file to override the default.
+    | Example: gpt-4o, gpt-4o-mini, gpt-3.5-turbo
+    */
+    'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
 ];

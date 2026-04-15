@@ -5,6 +5,7 @@ import {
     Building2,
     CalendarDays,
     ClipboardList,
+    Info,
     LayoutGrid,
     Mail,
     MessageSquare,
@@ -90,6 +91,11 @@ const mainNavItems: NavItem[] = [
         title: 'AI Suggestions',
         href: '/ai/suggestions',
         icon: Bot,
+    },
+    {
+        title: 'About',
+        href: '/about',
+        icon: Info,
     },
 ];
 

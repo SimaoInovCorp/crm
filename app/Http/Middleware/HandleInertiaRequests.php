@@ -69,6 +69,9 @@ class HandleInertiaRequests extends Middleware
                 'activeTenant' => $activeTenant,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'ai' => [
+                'model' => config('openai.model', 'gpt-4o-mini'),
+            ],
         ];
     }
 }

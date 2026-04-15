@@ -41,6 +41,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // AI
     Route::inertia('chat', 'ai/Chat')->name('ai.chat');
     Route::inertia('ai/suggestions', 'ai/Suggestions')->name('ai.suggestions');
+
+    // About
+    Route::inertia('about', 'About')->name('about');
 });
 
 require __DIR__.'/settings.php';

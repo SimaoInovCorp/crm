@@ -88,6 +88,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
 
     // Smart Chat (SSE streaming)
     Route::post('chat', SmartChatController::class)->name('chat');
+    Route::post('chat/quick', [SmartChatController::class, 'quickChat'])->name('chat.quick');
 
     // AI Suggestions
     Route::get('ai-suggestions', [AiSuggestionController::class, 'index'])->name('ai-suggestions.index');

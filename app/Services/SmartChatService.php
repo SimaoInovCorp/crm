@@ -125,6 +125,50 @@ PROMPT;
         return $this->processResponse($tenantId, $content);
     }
 
+    /**
+     * Execute a predefined quick query by key, scoped to the given tenant.
+     * Bypasses AI entirely — safe, tenant-scoped SQL only.
+     */
+    public function quickQuery(int $tenantId, string $key): array
+    {
+        $queries = [
+            'proposal_count' => [
+                'sql'         => "SELECT COUNT(*) as count FROM deals WHERE tenant_id = {$tenantId} AND stage = 'proposal'",
+                'explanation' => 'Deals currently in the Proposal stage.',
+            ],
+            'top5_entities' => [
+                'sql'         => "SELECT e.name, SUM(CAST(d.value AS DECIMAL(15,2))) as total_value FROM entities e INNER JOIN deals d ON d.entity_id = e.id WHERE e.tenant_id = {$tenantId} GROUP BY e.id, e.name ORDER BY total_value DESC LIMIT 5",
+                'explanation' => 'Top 5 entities by total deal value.',
+            ],
+            'closing_this_month' => [
+                'sql'         => "SELECT title, CAST(value AS DECIMAL(15,2)) as value, stage, expected_close_date FROM deals WHERE tenant_id = {$tenantId} AND MONTH(expected_close_date) = MONTH(CURDATE()) AND YEAR(expected_close_date) = YEAR(CURDATE()) ORDER BY expected_close_date ASC",
+                'explanation' => 'Deals expected to close this month.',
+            ],
+            'deals_above_10k' => [
+                'sql'         => "SELECT title, CAST(value AS DECIMAL(15,2)) as value, stage FROM deals WHERE tenant_id = {$tenantId} AND CAST(value AS DECIMAL(15,2)) > 10000 ORDER BY CAST(value AS DECIMAL(15,2)) DESC",
+                'explanation' => 'All deals with a value above €10,000.',
+            ],
+            'active_entities' => [
+                'sql'         => "SELECT COUNT(*) as count FROM entities WHERE tenant_id = {$tenantId} AND status = 'active'",
+                'explanation' => 'Number of entities with Active status.',
+            ],
+        ];
+
+        if (!isset($queries[$key])) {
+            return ['type' => 'answer', 'content' => 'Unknown quick query key.'];
+        }
+
+        $q       = $queries[$key];
+        $results = $this->executeQuery($tenantId, $q['sql']);
+
+        return [
+            'type'        => 'query',
+            'sql'         => $q['sql'],
+            'explanation' => $q['explanation'],
+            'results'     => $results,
+        ];
+    }
+
     private function processResponse(int $tenantId, string $content): array
     {
         // Strip markdown code fences if present

@@ -15,6 +15,7 @@ class FollowUpService
     /**
      * Start a follow-up automation cycle for a deal.
      * Dispatches the first email in 48 business hours.
+     * requires a queue worker to be running to send emails on time
      */
     public function start(Deal $deal, int $emailTemplateId): FollowUpAutomation
     {

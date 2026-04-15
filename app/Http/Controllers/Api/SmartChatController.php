@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AiSuggestion\SmartChatRequest;
 use App\Services\SmartChatService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SmartChatController extends Controller
@@ -49,6 +50,17 @@ class SmartChatController extends Controller
         }
 
         $result = $this->chatService->chat($tenant, $messages);
+        return response()->json($result);
+    }
+
+    /**
+     * Execute a predefined quick query by key — bypasses AI entirely.
+     */
+    public function quickChat(\Illuminate\Http\Request $request): JsonResponse
+    {
+        $key    = $request->input('key', '');
+        $tenant = app('current.tenant');
+        $result = $this->chatService->quickQuery($tenant->id, $key);
         return response()->json($result);
     }
 
