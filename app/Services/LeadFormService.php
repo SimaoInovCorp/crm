@@ -6,13 +6,14 @@ use App\Models\Deal;
 use App\Models\Entity;
 use App\Models\LeadForm;
 use App\Models\LeadFormSubmission;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class LeadFormService
 {
-    public function index(): Collection
+    public function __construct(private WebhookService $webhookService) {}
+    public function index(): LengthAwarePaginator
     {
-        return LeadForm::withCount('submissions')->orderBy('name')->get();
+        return LeadForm::withCount('submissions')->orderBy('name')->paginate(request()->integer('per_page', 25));
     }
 
     /**
@@ -88,6 +89,13 @@ class LeadFormService
         ]);
 
         $submission->update(['processed' => true, 'deal_id' => $deal->id]);
+
+        $this->webhookService->dispatch('lead.created', [
+            'lead_form'   => $form->name,
+            'entity_name' => $entity->name,
+            'email'       => $email,
+            'deal_id'     => $deal->id,
+        ]);
 
         return $submission->fresh();
     }

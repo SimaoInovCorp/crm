@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AiSuggestionController;
 use App\Http\Controllers\Api\AutomationRuleController;
 use App\Http\Controllers\Api\CalendarEventController;
+use App\Http\Controllers\Api\CsvImportController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DealController;
 use App\Http\Controllers\Api\DealStageController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\Api\PublicLeadFormController;
 use App\Http\Controllers\Api\SmartChatController;
 use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\TenantSwitchController;
+use App\Http\Controllers\Api\WebhookController;
 use Illuminate\Support\Facades\Route;
 
 // Public endpoints — no auth required
@@ -91,4 +93,11 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::post('ai-suggestions/{aiSuggestion}/accept', [AiSuggestionController::class, 'accept'])->name('ai-suggestions.accept');
     Route::post('ai-suggestions/{aiSuggestion}/dismiss', [AiSuggestionController::class, 'dismiss'])->name('ai-suggestions.dismiss');
     Route::post('ai-suggestions/{aiSuggestion}/postpone', [AiSuggestionController::class, 'postpone'])->name('ai-suggestions.postpone');
+
+    // Webhooks
+    Route::apiResource('webhooks', WebhookController::class)->except(['show']);
+
+    // CSV Import
+    Route::post('import/{type}', [CsvImportController::class, 'store'])->name('import.store')
+        ->where('type', 'entities|people|deals');
 });

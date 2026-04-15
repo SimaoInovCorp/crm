@@ -4,16 +4,17 @@ namespace App\Services;
 
 use App\Models\AutomationRule;
 use App\Models\Deal;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class AutomationRuleService
 {
+    public function __construct(private WebhookService $webhookService) {}
     /**
      * List all automation rules for the active tenant.
      */
-    public function index(): Collection
+    public function index(): LengthAwarePaginator
     {
-        return AutomationRule::orderBy('name')->get();
+        return AutomationRule::orderBy('name')->paginate(request()->integer('per_page', 25));
     }
 
     /**
@@ -105,6 +106,14 @@ class AutomationRuleService
                 default        => null,
             };
         }
+
+        $this->webhookService->dispatch('automation.fired', [
+            'rule_id'   => $rule->id,
+            'rule_name' => $rule->name ?? $rule->trigger,
+            'trigger'   => $rule->trigger,
+            'deal_id'   => $deal->id,
+            'deal_title'=> $deal->title,
+        ]);
     }
 
     private function notifyOwner(Deal $deal, string $message): void

@@ -80,8 +80,8 @@ class FollowUpService
         $recipient   = $deal->person?->email ?? $deal->entity?->email;
 
         if ($recipient) {
-            $subject = $template->subject;
-            $body    = $template->body;
+            $subject = $this->replacePlaceholders($template->subject, $deal);
+            $body    = $this->replacePlaceholders($template->body, $deal);
 
             Mail::send([], [], function ($message) use ($recipient, $subject, $body) {
                 $message->to($recipient)
@@ -138,11 +138,13 @@ class FollowUpService
         $recipient = $deal->person?->email ?? $deal->entity?->email;
 
         if ($recipient) {
-            $body = $customBody ?? $template->body;
+            $rawBody    = $customBody ?? $template->body;
+            $body       = $this->replacePlaceholders($rawBody, $deal);
+            $subject    = $this->replacePlaceholders($template->subject, $deal);
 
-            Mail::send([], [], function ($message) use ($recipient, $template, $body) {
+            Mail::send([], [], function ($message) use ($recipient, $subject, $body) {
                 $message->to($recipient)
-                    ->subject($template->subject)
+                    ->subject($subject)
                     ->html($body);
             });
         }
@@ -177,11 +179,36 @@ class FollowUpService
     }
 
     /**
+     * Replace template placeholders with actual deal/contact data.
+     *
+     * Supported placeholders:
+     *   {{contact_name}} / {{name}} — person name, or entity name fallback
+     *   {{company}}                 — linked entity/company name
+     *   {{deal_title}}              — deal title
+     *   {{stage}}                   — deal stage
+     */
+    private function replacePlaceholders(string $text, Deal $deal): string
+    {
+        $deal->loadMissing(['person', 'entity']);
+
+        $contactName = $deal->person?->name ?? $deal->entity?->name ?? '';
+        $company     = $deal->entity?->name ?? '';
+        $dealTitle   = $deal->title ?? '';
+        $stage       = $deal->stage ?? '';
+
+        return str_replace(
+            ['{{contact_name}}', '{{name}}', '{{company}}', '{{deal_title}}', '{{stage}}'],
+            [$contactName,       $contactName, $company,    $dealTitle,       $stage],
+            $text
+        );
+    }
+
+    /**
      * List all email templates for the active tenant.
      */
-    public function templates(): \Illuminate\Database\Eloquent\Collection
+    public function templates(): \Illuminate\Pagination\LengthAwarePaginator
     {
-        return EmailTemplate::orderBy('name')->get();
+        return EmailTemplate::orderBy('name')->paginate(request()->integer('per_page', 25));
     }
 
     /**

@@ -142,9 +142,21 @@
 </head>
 <body>
     <div class="card">
-        <div class="icon-wrap">
-            <svg viewBox="0 0 24 24">
-                <path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        <div class="icon-wrap" style="background: none; margin-bottom: 1.5rem;">
+            <!-- Animated Robot SVG -->
+            <svg id="robot" width="64" height="64" viewBox="0 0 64 64" style="display:block;margin:auto;" xmlns="http://www.w3.org/2000/svg">
+                <g>
+                    <rect x="16" y="24" width="32" height="24" rx="8" fill="#e0e7ff" stroke="#3730a3" stroke-width="2"/>
+                    <rect x="26" y="40" width="12" height="8" rx="3" fill="#a5b4fc"/>
+                    <circle cx="24" cy="36" r="4" fill="#fff" stroke="#3730a3" stroke-width="2"/>
+                    <circle cx="40" cy="36" r="4" fill="#fff" stroke="#3730a3" stroke-width="2"/>
+                    <circle id="eye-left" cx="24" cy="36" r="1.5" fill="#3730a3"/>
+                    <circle id="eye-right" cx="40" cy="36" r="1.5" fill="#3730a3"/>
+                    <rect x="28" y="20" width="8" height="6" rx="2" fill="#a5b4fc" stroke="#3730a3" stroke-width="2"/>
+                    <rect x="30" y="10" width="4" height="10" rx="2" fill="#3730a3"/>
+                    <rect x="12" y="28" width="4" height="12" rx="2" fill="#a5b4fc"/>
+                    <rect x="48" y="28" width="4" height="12" rx="2" fill="#a5b4fc"/>
+                </g>
             </svg>
         </div>
 
@@ -157,9 +169,14 @@
             This is usually a temporary issue. Please wait a moment and try again.
         </p>
 
+
         <div class="detail">
-            MySQL · 127.0.0.1:3306 · SQLSTATE HY000 [2002]<br>
-            Connection was actively refused by the target host.
+            The service is temporarily unavailable. Please try again later.
+        </div>
+
+        <div id="robot-tip" style="margin-bottom:1.5rem; font-size:0.95rem; color:var(--muted);">
+            <strong>🤖 Did you know?</strong>
+            <span id="robot-tip-text">Our CRM robots never sleep—they just recharge!</span>
         </div>
 
         <a href="javascript:location.reload()" class="btn">
@@ -175,6 +192,34 @@
         <div class="footer">
             If the problem persists, contact your system administrator.
         </div>
+
+        <script>
+            // Animate robot eyes (blink)
+            setInterval(() => {
+                document.getElementById('eye-left').setAttribute('r', '0.5');
+                document.getElementById('eye-right').setAttribute('r', '0.5');
+                setTimeout(() => {
+                    document.getElementById('eye-left').setAttribute('r', '1.5');
+                    document.getElementById('eye-right').setAttribute('r', '1.5');
+                }, 180);
+            }, 3200);
+
+            // Rotating tips/jokes
+            const tips = [
+                "Our CRM robots never sleep—they just recharge!",
+                "Tip: You can use keyboard shortcuts to speed up your workflow.",
+                "Joke: Why did the robot go on vacation? To recharge its batteries!",
+                "Tip: Remember to back up your data regularly.",
+                "Joke: What do you call a robot who likes to take the scenic route? R2-Detour.",
+                "Tip: If you see this page often, check your database connection settings.",
+                "Joke: Why was the robot so bad at soccer? It kept kicking up sparks!"
+            ];
+            let tipIndex = 0;
+            setInterval(() => {
+                tipIndex = (tipIndex + 1) % tips.length;
+                document.getElementById('robot-tip-text').textContent = tips[tipIndex];
+            }, 10000);
+        </script>
     </div>
 </body>
 </html>
