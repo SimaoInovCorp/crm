@@ -5,13 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Entity\StoreEntityRequest;
 use App\Http\Requests\Entity\UpdateEntityRequest;
+use App\Http\Requests\Shared\SendEmailRequest;
 use App\Http\Resources\EntityResource;
 use App\Models\Entity;
 use App\Services\EntityService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EntityController extends Controller
@@ -63,28 +63,15 @@ class EntityController extends Controller
         return $this->entityService->exportCsvStream($request->only(['search', 'status']));
     }
 
-    public function sendEmail(Request $request, Entity $entity): JsonResponse
+    public function sendEmail(SendEmailRequest $request, Entity $entity): JsonResponse
     {
         $this->authorize('view', $entity);
 
-        $validated = $request->validate([
-            'subject' => ['required', 'string', 'max:255'],
-            'body'    => ['required', 'string', 'max:10000'],
-        ]);
-
-        if (! $entity->email) {
-            return response()->json(['message' => 'This entity has no email address.'], 422);
+        try {
+            $this->entityService->sendEmail($entity, $request->validated('subject'), $request->validated('body'));
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
         }
-
-        $from     = config('mail.from.address');
-        $fromName = config('mail.from.name');
-
-        Mail::send([], [], function ($message) use ($entity, $validated, $from, $fromName) {
-            $message->to($entity->email, $entity->name)
-                    ->from($from, $fromName)
-                    ->subject($validated['subject'])
-                    ->html(nl2br(e($validated['body'])));
-        });
 
         return response()->json(['message' => 'Email sent successfully.']);
     }

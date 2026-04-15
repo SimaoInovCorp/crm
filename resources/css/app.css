@@ -87,6 +87,92 @@
             'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
             'Noto Color Emoji';
     }
+
+    /* ── Global transitions ──────────────────────────── */
+    .transition-page {
+        transition:
+            opacity 0.18s ease,
+            transform 0.18s ease;
+    }
+
+    /* ── Card depth ──────────────────────────────────── */
+    .card-depth {
+        box-shadow:
+            0 2px 6px 0 rgb(0 0 0 / 0.1),
+            0 8px 20px -4px rgb(0 0 0 / 0.12);
+        transition:
+            box-shadow 0.2s ease,
+            transform 0.2s ease;
+    }
+
+    .card-depth:hover {
+        box-shadow:
+            0 8px 28px -4px rgb(0 0 0 / 0.2),
+            0 4px 10px -2px rgb(0 0 0 / 0.12);
+        transform: translateY(-2px);
+    }
+
+    /* ── Button pop ──────────────────────────────────── */
+    .btn-pop {
+        transition:
+            transform 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+
+    .btn-pop:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px -2px rgb(0 0 0 / 0.25);
+    }
+
+    .btn-pop:active:not(:disabled) {
+        transform: translateY(0);
+        box-shadow: none;
+    }
+
+    /* ── Spinner keyframe ────────────────────────────── */
+    @keyframes crm-spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .crm-spinner {
+        display: inline-block;
+        width: 1.25rem;
+        height: 1.25rem;
+        border: 2px solid currentColor;
+        border-top-color: transparent;
+        border-radius: 9999px;
+        animation: crm-spin 0.7s linear infinite;
+    }
+
+    .crm-spinner-lg {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-width: 3px;
+    }
+
+    /* ── Skeleton pulse ──────────────────────────────── */
+    .skeleton {
+        background: linear-gradient(
+            90deg,
+            var(--muted) 25%,
+            hsl(0 0% 92%) 50%,
+            var(--muted) 75%
+        );
+        background-size: 400% 100%;
+        animation: skeleton-wave 1.4s ease infinite;
+        border-radius: var(--radius-sm);
+    }
+
+    @keyframes skeleton-wave {
+        0% {
+            background-position: 100% 0;
+        }
+        100% {
+            background-position: -100% 0;
+        }
+    }
 }
 
 :root {
@@ -115,15 +201,16 @@
     --chart-4: hsl(43 74% 66%);
     --chart-5: hsl(27 87% 67%);
     --radius: 0.5rem;
-    --sidebar-background: hsl(0 0% 98%);
-    --sidebar-foreground: hsl(240 5.3% 26.1%);
-    --sidebar-primary: hsl(0 0% 10%);
+    --sidebar-background: hsl(210 60% 95%);
+    --sidebar-foreground: hsl(210 30% 25%);
+    --sidebar-primary: hsl(210 60% 30%);
     --sidebar-primary-foreground: hsl(0 0% 98%);
-    --sidebar-accent: hsl(0 0% 94%);
-    --sidebar-accent-foreground: hsl(0 0% 30%);
-    --sidebar-border: hsl(0 0% 91%);
+    --sidebar-accent: hsl(210 50% 88%);
+    --sidebar-accent-foreground: hsl(210 30% 20%);
+    --sidebar-border: hsl(210 40% 88%);
     --sidebar-ring: hsl(217.2 91.2% 59.8%);
-    --sidebar: hsl(0 0% 98%);
+    --sidebar: hsl(210 60% 95%);
+    --background: hsl(270 30% 97%);
 }
 
 .dark {
@@ -169,4 +256,104 @@
     body {
         @apply bg-background text-foreground;
     }
+}
+
+/* ── FullCalendar dark mode overrides ──────────────────────────── */
+/*
+ * FullCalendar injects its own CSS at runtime via injectStyles().
+ * It sets :root { --fc-page-bg-color: #fff } and applies it to the sticky
+ * header wrapper (td). Since html.dark has higher specificity than :root,
+ * our variable overrides here win. All rules use !important to beat
+ * FullCalendar's dynamically injected CSS that arrives after app.css loads.
+ */
+
+/* 1. Override FullCalendar CSS variables — html.dark beats :root specificity */
+html.dark {
+    --fc-page-bg-color: hsl(0 0% 7%);
+    --fc-neutral-bg-color: hsl(0 0% 14.9%);
+    --fc-border-color: hsl(0 0% 20%);
+    --fc-neutral-text-color: hsl(0 0% 70%);
+    --fc-today-bg-color: hsl(217 91% 12%);
+}
+
+/* 2. Column header row — give it a strong blue so it's always visible */
+html.dark .fc .fc-col-header-cell {
+    background-color: hsl(217 91% 40%) !important;
+    color: #ffffff !important;
+}
+
+html.dark .fc .fc-col-header-cell a,
+html.dark .fc .fc-col-header-cell-cushion {
+    color: #ffffff !important;
+    text-decoration: none !important;
+}
+
+/* 3. Sticky header wrapper td also gets dark bg so no white bleeds through */
+html.dark .fc .fc-scrollgrid-section-sticky > * {
+    background-color: hsl(0 0% 7%) !important;
+}
+
+/* 4. Day grid cells */
+html.dark .fc .fc-daygrid-day {
+    background-color: hsl(0 0% 7%) !important;
+    color: hsl(0 0% 98%) !important;
+}
+
+html.dark .fc .fc-daygrid-day-number {
+    color: hsl(0 0% 98%) !important;
+}
+
+/* 5. Toolbar */
+html.dark .fc .fc-toolbar-title {
+    color: hsl(0 0% 98%) !important;
+}
+
+/* 6. Buttons */
+html.dark .fc .fc-button,
+html.dark .fc .fc-button-primary {
+    background-color: hsl(217 91% 40%) !important;
+    border-color: hsl(217 91% 35%) !important;
+    color: #ffffff !important;
+}
+
+html.dark .fc .fc-button:hover,
+html.dark .fc .fc-button-primary:hover {
+    background-color: hsl(217 91% 33%) !important;
+}
+
+html.dark .fc .fc-button-active,
+html.dark .fc .fc-button-primary:not(:disabled).fc-button-active {
+    background-color: hsl(217 91% 28%) !important;
+    border-color: hsl(217 91% 24%) !important;
+}
+
+/* 7. Grid borders */
+html.dark .fc .fc-scrollgrid {
+    border-color: hsl(0 0% 20%) !important;
+}
+
+html.dark .fc td,
+html.dark .fc th {
+    border-color: hsl(0 0% 20%) !important;
+}
+
+/* 8. Today highlight */
+html.dark .fc .fc-daygrid-day.fc-day-today {
+    background-color: hsl(217 91% 12%) !important;
+}
+
+/* 9. Time grid */
+html.dark .fc .fc-timegrid-slot {
+    border-color: hsl(0 0% 20%) !important;
+}
+
+html.dark .fc .fc-timegrid-axis {
+    color: hsl(0 0% 70%) !important;
+}
+
+/* 10. Events */
+html.dark .fc .fc-event {
+    background-color: hsl(217 91% 50%) !important;
+    border-color: hsl(217 91% 45%) !important;
+    color: #ffffff !important;
 }

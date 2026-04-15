@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ActivityLog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ActivityLogService
 {
@@ -38,13 +39,41 @@ class ActivityLogService
     /**
      * Get paginated activity timeline for a given model.
      */
-    public function timeline(Model $loggable, int $perPage = 20): LengthAwarePaginator
+    public function timeline(Model $loggable, int $perPage = 5): LengthAwarePaginator
     {
         return ActivityLog::with('user')
             ->where('loggable_type', $loggable::class)
             ->where('loggable_id', $loggable->id)
             ->latest()
             ->paginate($perPage);
+    }
+
+    /**
+     * Stream all activity logs for a given model as a CSV file.
+     */
+    public function exportTimelineCsv(Model $loggable): StreamedResponse
+    {
+        $logs = ActivityLog::with('user')
+            ->where('loggable_type', $loggable::class)
+            ->where('loggable_id', $loggable->id)
+            ->latest()
+            ->get();
+
+        $filename = 'timeline-' . class_basename($loggable) . '-' . $loggable->id . '-' . now()->format('Ymd') . '.csv';
+
+        return response()->streamDownload(function () use ($logs) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['Date', 'User', 'Type', 'Description']);
+            foreach ($logs as $log) {
+                fputcsv($handle, [
+                    $log->created_at->toDateTimeString(),
+                    $log->user?->name ?? 'System',
+                    $log->type,
+                    $log->description,
+                ]);
+            }
+            fclose($handle);
+        }, $filename, ['Content-Type' => 'text/csv']);
     }
 
     /**

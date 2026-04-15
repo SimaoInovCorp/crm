@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Entity;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EntityService
@@ -99,5 +100,24 @@ class EntityService
             }
             fclose($out);
         }, 'entities.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    /**
+     * Send a plain-text email to an entity's email address.
+     *
+     * @throws \InvalidArgumentException if entity has no email
+     */
+    public function sendEmail(Entity $entity, string $subject, string $body): void
+    {
+        if (! $entity->email) {
+            throw new \InvalidArgumentException('This entity has no email address.');
+        }
+
+        Mail::send([], [], function ($message) use ($entity, $subject, $body) {
+            $message->to($entity->email, $entity->name)
+                    ->from(config('mail.from.address'), config('mail.from.name'))
+                    ->subject($subject)
+                    ->html(nl2br(e($body)));
+        });
     }
 }

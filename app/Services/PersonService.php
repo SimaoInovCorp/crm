@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Person;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PersonService
@@ -98,5 +99,24 @@ class PersonService
             }
             fclose($out);
         }, 'people.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    /**
+     * Send a plain-text email to a person's email address.
+     *
+     * @throws \InvalidArgumentException if person has no email
+     */
+    public function sendEmail(Person $person, string $subject, string $body): void
+    {
+        if (! $person->email) {
+            throw new \InvalidArgumentException('This person has no email address.');
+        }
+
+        Mail::send([], [], function ($message) use ($person, $subject, $body) {
+            $message->to($person->email, $person->name)
+                    ->from(config('mail.from.address'), config('mail.from.name'))
+                    ->subject($subject)
+                    ->html(nl2br(e($body)));
+        });
     }
 }

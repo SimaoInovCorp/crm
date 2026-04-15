@@ -54,6 +54,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::apiResource('deals', DealController::class);
     Route::patch('deals/{deal}/stage', DealStageController::class)->name('deals.stage');
     Route::get('deals/{deal}/timeline', [DealTimelineController::class, 'index'])->name('deals.timeline');
+    Route::get('deals/{deal}/timeline/export', [DealTimelineController::class, 'export'])->name('deals.timeline.export');
     Route::post('deals/{deal}/proposal', [ProposalController::class, 'store'])->name('deals.proposal');
     Route::get('deals/{deal}/follow-up', [FollowUpController::class, 'show'])->name('deals.follow-up.show');
     Route::post('deals/{deal}/follow-up', [FollowUpController::class, 'start'])->name('deals.follow-up.start');

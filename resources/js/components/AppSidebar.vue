@@ -1,10 +1,23 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid } from 'lucide-vue-next';
+import {
+    Bot,
+    Building2,
+    CalendarDays,
+    ClipboardList,
+    LayoutGrid,
+    Mail,
+    MessageSquare,
+    Package,
+    Settings2,
+    TrendingUp,
+    Users,
+} from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
+import TenantSwitcher from '@/components/TenantSwitcher.vue';
 import {
     Sidebar,
     SidebarContent,
@@ -23,20 +36,64 @@ const mainNavItems: NavItem[] = [
         href: dashboard(),
         icon: LayoutGrid,
     },
+    {
+        title: 'Entities',
+        href: '/entities',
+        icon: Building2,
+    },
+    {
+        title: 'People',
+        href: '/people',
+        icon: Users,
+    },
+    {
+        title: 'Deals',
+        href: '/deals',
+        icon: TrendingUp,
+    },
+    {
+        title: 'Calendar',
+        href: '/calendar',
+        icon: CalendarDays,
+    },
+    {
+        title: 'Email Templates',
+        href: '/automation/email-templates',
+        icon: Mail,
+    },
+    {
+        title: 'Automation Rules',
+        href: '/automation/rules',
+        icon: Settings2,
+    },
+    {
+        title: 'Lead Forms',
+        href: '/lead-forms',
+        icon: ClipboardList,
+    },
+    {
+        title: 'Products',
+        href: '/products',
+        icon: Package,
+    },
+    {
+        title: 'Product Statistics',
+        href: '/products/statistics',
+        icon: Package,
+    },
+    {
+        title: 'Smart Chat',
+        href: '/chat',
+        icon: MessageSquare,
+    },
+    {
+        title: 'AI Suggestions',
+        href: '/ai/suggestions',
+        icon: Bot,
+    },
 ];
 
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: FolderGit2,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
-    },
-];
+const footerNavItems: NavItem[] = [];
 </script>
 
 <template>
@@ -51,6 +108,7 @@ const footerNavItems: NavItem[] = [
                     </SidebarMenuButton>
                 </SidebarMenuItem>
             </SidebarMenu>
+            <TenantSwitcher />
         </SidebarHeader>
 
         <SidebarContent>

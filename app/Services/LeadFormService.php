@@ -51,7 +51,7 @@ class LeadFormService
     /**
      * Process a public form submission: store raw data and auto-create Entity + Deal.
      */
-    public function submit(LeadForm $form, array $data, string $ip = null, string $origin = null): LeadFormSubmission
+    public function submit(LeadForm $form, array $data, ?string $ip = null, ?string $origin = null): LeadFormSubmission
     {
         $submission = LeadFormSubmission::create([
             'lead_form_id' => $form->id,
