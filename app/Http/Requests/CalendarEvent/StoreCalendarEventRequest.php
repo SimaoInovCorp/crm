@@ -29,6 +29,10 @@ class StoreCalendarEventRequest extends FormRequest
             'attendees'        => ['nullable', 'array'],
             'attendees.*.type' => ['required_with:attendees', 'string', 'in:user,person'],
             'attendees.*.id'   => ['required_with:attendees', 'integer'],
+            'products'                  => ['nullable', 'array'],
+            'products.*.product_id'     => ['required_with:products', 'integer', 'exists:products,id'],
+            'products.*.quantity'       => ['required_with:products', 'integer', 'min:1'],
+            'products.*.unit_price'     => ['required_with:products', 'numeric', 'min:0'],
         ];
     }
 }

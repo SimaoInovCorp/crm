@@ -22,13 +22,17 @@ class CalendarEventService
 
     public function create(array $data): CalendarEvent
     {
-        $attendees      = $data['attendees'] ?? [];
-        $notifyPerson   = $data['notify_person'] ?? false;
-        unset($data['attendees']);
+        $attendees    = $data['attendees'] ?? [];
+        $products     = $data['products'] ?? [];
+        $notifyPerson = $data['notify_person'] ?? false;
+        unset($data['attendees'], $data['products']);
 
         $event = CalendarEvent::create($data);
 
         $this->syncAttendees($event, $attendees);
+        if (!empty($products)) {
+            $this->syncProducts($event, $products);
+        }
         $this->scheduleReminder($event);
 
         // Send immediate notification email to person if requested
@@ -41,32 +45,55 @@ class CalendarEventService
             }
         }
 
-        return $event->load(['owner', 'attendees', 'entity', 'person', 'deal']);
+        return $event->load(['owner', 'attendees', 'entity', 'person', 'deal', 'calendarEventProducts.product']);
     }
 
     public function show(CalendarEvent $event): CalendarEvent
     {
-        return $event->load(['owner', 'attendees.attendee', 'eventable']);
+        return $event->load(['owner', 'attendees.attendee', 'eventable', 'calendarEventProducts.product']);
     }
 
     public function update(CalendarEvent $event, array $data): CalendarEvent
     {
-        $attendees = $data['attendees'] ?? null;
-        unset($data['attendees']);
+        $attendees = array_key_exists('attendees', $data) ? $data['attendees'] : null;
+        $products  = array_key_exists('products', $data)  ? $data['products']  : null;
+        unset($data['attendees'], $data['products']);
 
         $event->update($data);
 
         if ($attendees !== null) {
             $this->syncAttendees($event, $attendees);
         }
+        if ($products !== null) {
+            $this->syncProducts($event, $products);
+        }
 
-        return $event->fresh(['owner', 'attendees', 'entity', 'person', 'deal']);
+        return $event->fresh(['owner', 'attendees', 'entity', 'person', 'deal', 'calendarEventProducts.product']);
     }
 
     public function delete(CalendarEvent $event): void
     {
         $event->attendees()->delete();
+        $event->calendarEventProducts()->delete();
         $event->delete();
+    }
+
+    /**
+     * Sync product lines for a calendar event. Replaces all existing lines.
+     *
+     * @param  array<array{product_id: int, quantity: int, unit_price: float}>  $products
+     */
+    public function syncProducts(CalendarEvent $event, array $products): void
+    {
+        $event->calendarEventProducts()->delete();
+
+        foreach ($products as $item) {
+            $event->calendarEventProducts()->create([
+                'product_id' => $item['product_id'],
+                'quantity'   => $item['quantity'],
+                'price'      => $item['unit_price'],
+            ]);
+        }
     }
 
     private function syncAttendees(CalendarEvent $event, array $attendees): void

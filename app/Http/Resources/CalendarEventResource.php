@@ -52,6 +52,14 @@ class CalendarEventResource extends JsonResource
                     'attendee_id'  => $a->attendee_id,
                 ])
             ),
+            'products'       => $this->whenLoaded('calendarEventProducts', fn () =>
+                $this->calendarEventProducts->map(fn ($ep) => [
+                    'id'         => $ep->product_id,
+                    'name'       => $ep->product?->name,
+                    'quantity'   => $ep->quantity,
+                    'unit_price' => $ep->price,
+                ])
+            ),
             'created_at'     => $this->created_at?->toISOString(),
         ];
     }

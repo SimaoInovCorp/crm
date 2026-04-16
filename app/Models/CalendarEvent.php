@@ -6,6 +6,7 @@ use App\Models\Concerns\HasTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
@@ -60,6 +61,18 @@ class CalendarEvent extends Model
     public function attendees(): HasMany
     {
         return $this->hasMany(CalendarEventAttendee::class);
+    }
+
+    public function calendarEventProducts(): HasMany
+    {
+        return $this->hasMany(CalendarEventProduct::class);
+    }
+
+    public function products(): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'calendar_event_products')
+            ->withPivot('quantity', 'price')
+            ->withTimestamps();
     }
 
     public function eventable(): MorphTo

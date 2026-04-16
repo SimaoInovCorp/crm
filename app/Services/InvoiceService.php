@@ -22,7 +22,7 @@ class InvoiceService
     public function sendInvoice(CalendarEvent $event): string
     {
         // Load required relationships
-        $event->load(['deal.products', 'deal.entity', 'person', 'deal.owner']);
+        $event->load(['deal.products', 'deal.entity', 'person', 'deal.owner', 'calendarEventProducts.product']);
 
         $deal   = $event->deal;
         $person = $event->person ?? $deal?->person;
@@ -35,8 +35,17 @@ class InvoiceService
             throw new \RuntimeException('No person with an email address is linked to this event or deal.');
         }
 
-        // Load deal products via pivot
-        $products = $deal->products()->withPivot(['quantity', 'price'])->get();
+        // Prefer event-level products; fall back to deal products
+        $eventProducts = $event->calendarEventProducts;
+        if ($eventProducts->isNotEmpty()) {
+            // Map to a uniform shape so the Blade template stays identical
+            $products = $eventProducts->map(function ($ep) {
+                $ep->product->pivot = (object) ['quantity' => $ep->quantity, 'price' => $ep->price];
+                return $ep->product;
+            });
+        } else {
+            $products = $deal->products()->withPivot(['quantity', 'price'])->get();
+        }
 
         $subtotal = $products->sum(fn ($p) => $p->pivot->quantity * $p->pivot->price)
             ?: (float) $deal->value;

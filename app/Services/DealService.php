@@ -51,11 +51,20 @@ class DealService
 
     public function create(array $data): Deal
     {
+        $products = $data['products'] ?? [];
+        unset($data['products']);
+
         $data['probability'] = $data['probability']
             ?? self::STAGE_PROBABILITY[$data['stage'] ?? 'lead']
             ?? 0;
 
-        return Deal::create($data);
+        $deal = Deal::create($data);
+
+        if (!empty($products)) {
+            $this->syncProducts($deal, $products);
+        }
+
+        return $deal->load(['entity', 'person', 'owner', 'dealProducts.product']);
     }
 
     public function show(Deal $deal): Deal
@@ -65,11 +74,19 @@ class DealService
 
     public function update(Deal $deal, array $data): Deal
     {
+        $products = array_key_exists('products', $data) ? $data['products'] : null;
+        unset($data['products']);
+
         if (isset($data['stage']) && ! isset($data['probability'])) {
             $data['probability'] = self::STAGE_PROBABILITY[$data['stage']] ?? $deal->probability;
         }
 
         $deal->update($data);
+
+        if ($products !== null) {
+            $this->syncProducts($deal, $products);
+        }
+
         return $deal->fresh(['entity', 'person', 'owner', 'dealProducts.product']);
     }
 
@@ -106,6 +123,24 @@ class DealService
     public function delete(Deal $deal): void
     {
         $deal->delete();
+    }
+
+    /**
+     * Sync product lines for a deal. Replaces all existing lines.
+     *
+     * @param  array<array{product_id: int, quantity: int, unit_price: float}>  $products
+     */
+    public function syncProducts(Deal $deal, array $products): void
+    {
+        $deal->dealProducts()->delete();
+
+        foreach ($products as $item) {
+            $deal->dealProducts()->create([
+                'product_id' => $item['product_id'],
+                'quantity'   => $item['quantity'],
+                'price'      => $item['unit_price'],
+            ]);
+        }
     }
 
     /**
