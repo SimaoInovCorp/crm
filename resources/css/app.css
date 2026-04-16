@@ -1,3 +1,54 @@
+/* ── CRM Table Container ─────────────────────────────── */
+.crm-table-container {
+    border-radius: 0.5rem;
+    border-width: 1.5px;
+    border-color: #a78bfa; /* purple-200 */
+    background-color: var(--card, #fff);
+    padding: 1rem;
+    box-shadow:
+        0 10px 24px 0 rgb(139 92 246 / 0.1),
+        0 1.5px 4px 0 rgb(139 92 246 / 0.1);
+    box-shadow:
+        0 10px 24px 0 rgb(139 92 246 / 0.1),
+        0 1.5px 4px 0 rgb(139 92 246 / 0.1),
+        0 0 #0000;
+    /* ring-1 shadow-purple-200 ring-purple-200 dark:shadow-purple-900 dark:ring-purple-800 */
+    box-shadow:
+        0 10px 24px 0 rgb(139 92 246 / 0.1),
+        0 1.5px 4px 0 rgb(139 92 246 / 0.1),
+        0 0 #0000;
+    box-shadow:
+        0 10px 24px 0 rgb(139 92 246 / 0.1),
+        0 1.5px 4px 0 rgb(139 92 246 / 0.1),
+        0 0 #0000;
+    box-shadow:
+        0 10px 24px 0 rgb(139 92 246 / 0.1),
+        0 1.5px 4px 0 rgb(139 92 246 / 0.1),
+        0 0 #0000;
+    box-shadow:
+        0 10px 24px 0 rgb(139 92 246 / 0.1),
+        0 1.5px 4px 0 rgb(139 92 246 / 0.1),
+        0 0 #0000;
+    box-shadow:
+        0 10px 24px 0 rgb(139 92 246 / 0.1),
+        0 1.5px 4px 0 rgb(139 92 246 / 0.1),
+        0 0 #0000;
+    box-shadow:
+        0 10px 24px 0 rgb(139 92 246 / 0.1),
+        0 1.5px 4px 0 rgb(139 92 246 / 0.1),
+        0 0 #0000;
+    box-shadow:
+        0 10px 24px 0 rgb(139 92 246 / 0.1),
+        0 1.5px 4px 0 rgb(139 92 246 / 0.1),
+        0 0 #0000;
+}
+
+.dark .crm-table-container {
+    border-color: #6d28d9; /* purple-800 */
+    box-shadow:
+        0 10px 24px 0 rgb(76 29 149 / 0.2),
+        0 1.5px 4px 0 rgb(76 29 149 / 0.2);
+}
 @import 'tailwindcss';
 
 @import 'tw-animate-css';

@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use App\Models\CalendarEvent;
-use App\Models\Deal;
+
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Hash;
+
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
