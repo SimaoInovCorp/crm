@@ -60,6 +60,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | SSL Peer Verification
+    |--------------------------------------------------------------------------
+    |
+    | Set OPENAI_VERIFY_SSL=false in .env if your local dev machine uses an
+    | SSL-inspection proxy whose CA is not in PHP's certificate bundle.
+    | Always leave this as true in production.
+    */
+    'verify_ssl' => env('OPENAI_VERIFY_SSL', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | OpenAI Chat Model
     |--------------------------------------------------------------------------
     |

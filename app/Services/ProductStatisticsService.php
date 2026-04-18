@@ -19,36 +19,40 @@ class ProductStatisticsService
     {
         $tenant = app('current.tenant');
 
-        $query = DealProduct::query()
+        // Start from Product so zero-sold products are included (LEFT JOIN).
+        // Filters go inside the deals JOIN condition so unmatched deal_products
+        // produce a NULL deals.id, which we then exclude from the aggregates
+        // via CASE WHEN — this keeps 0-sold products in the result.
+        $query = Product::query()
             ->select([
-                'deal_products.product_id',
+                'products.id as product_id',
                 'products.name as product_name',
-                DB::raw('COUNT(DISTINCT deal_products.deal_id) as frequency'),
-                DB::raw('SUM(deal_products.quantity * deal_products.price) as total_value'),
+                DB::raw('COUNT(DISTINCT CASE WHEN deals.id IS NOT NULL THEN deal_products.deal_id ELSE NULL END) as frequency'),
+                DB::raw('COALESCE(SUM(CASE WHEN deals.id IS NOT NULL THEN deal_products.quantity * deal_products.price ELSE 0 END), 0) as total_value'),
             ])
-            ->join('products', 'products.id', '=', 'deal_products.product_id')
-            ->join('deals', 'deals.id', '=', 'deal_products.deal_id')
-            ->where('deals.tenant_id', $tenant->id)
-            ->whereNull('deals.deleted_at')
+            ->leftJoin('deal_products', 'deal_products.product_id', '=', 'products.id')
+            ->leftJoin('deals', function ($join) use ($tenant, $filters) {
+                $join->on('deals.id', '=', 'deal_products.deal_id')
+                     ->where('deals.tenant_id', $tenant->id)
+                     ->whereNull('deals.deleted_at');
+
+                if (!empty($filters['date_from'])) {
+                    $join->whereDate('deals.expected_close_date', '>=', $filters['date_from']);
+                }
+                if (!empty($filters['date_to'])) {
+                    $join->whereDate('deals.expected_close_date', '<=', $filters['date_to']);
+                }
+                if (!empty($filters['stage'])) {
+                    $join->where('deals.stage', $filters['stage']);
+                }
+                if (!empty($filters['owner_id'])) {
+                    $join->where('deals.owner_id', $filters['owner_id']);
+                }
+            })
+            ->where('products.tenant_id', $tenant->id)
             ->whereNull('products.deleted_at')
-            ->groupBy('deal_products.product_id', 'products.name')
+            ->groupBy('products.id', 'products.name')
             ->orderByDesc('total_value');
-
-        if (!empty($filters['date_from'])) {
-            $query->whereDate('deals.expected_close_date', '>=', $filters['date_from']);
-        }
-
-        if (!empty($filters['date_to'])) {
-            $query->whereDate('deals.expected_close_date', '<=', $filters['date_to']);
-        }
-
-        if (!empty($filters['stage'])) {
-            $query->where('deals.stage', $filters['stage']);
-        }
-
-        if (!empty($filters['owner_id'])) {
-            $query->where('deals.owner_id', $filters['owner_id']);
-        }
 
         return $query->get()->map(fn ($row) => [
             'product_id'   => $row->product_id,

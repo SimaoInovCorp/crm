@@ -7,6 +7,7 @@ use App\Models\Deal;
 use App\Models\Tenant;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 use OpenAI\Laravel\Facades\OpenAI;
 
 class AiSalesAgentService
@@ -31,17 +32,28 @@ class AiSalesAgentService
 
     /**
      * Analyze all open deals for a tenant and generate suggestions.
+     * Returns counts of created/failed/total.
      */
-    public function analyzeDeals(Tenant $tenant): void
+    public function analyzeDeals(Tenant $tenant): array
     {
         $deals = Deal::with(['entity', 'person', 'activityLogs' => fn ($q) => $q->latest()->limit(5)])
             ->where('tenant_id', $tenant->id)
             ->whereNotIn('stage', ['won', 'lost'])
             ->get();
 
+        $created = 0;
+        $failed  = 0;
+
         foreach ($deals as $deal) {
-            $this->generateSuggestionForDeal($tenant, $deal);
+            $suggestion = $this->generateSuggestionForDeal($tenant, $deal);
+            if ($suggestion !== null) {
+                $created++;
+            } else {
+                $failed++;
+            }
         }
+
+        return ['created' => $created, 'failed' => $failed, 'total' => $deals->count()];
     }
 
     /**
@@ -59,14 +71,14 @@ class AiSalesAgentService
                     ['role' => 'system', 'content' => $this->systemPrompt()],
                     ['role' => 'user',   'content' => $prompt],
                 ],
-                'max_tokens'  => 300,
-                'temperature' => 0.7,
             ]);
 
             $content = $response->choices[0]->message->content ?? '';
             $parsed  = $this->parseResponse($content);
 
             if (!$parsed) {
+                Log::warning('AI suggestion parse failed for deal ' . $deal->id . '. Finish reason: '
+                    . ($response->choices[0]->finishReason ?? 'unknown') . '. Content: ' . $content);
                 return null;
             }
 
@@ -77,8 +89,8 @@ class AiSalesAgentService
                 'rationale' => $parsed['rationale'],
                 'status'    => 'pending',
             ]);
-        } catch (\Throwable) {
-            // Silently fail — AI is best-effort, not mission critical
+        } catch (\Throwable $e) {
+            Log::warning('AI suggestion generation failed for deal ' . $deal->id . ': ' . $e->getMessage());
             return null;
         }
     }
@@ -117,8 +129,10 @@ class AiSalesAgentService
     {
         return 'You are a CRM sales coach AI. Analyze the given deal data and activity history, '
             .'then suggest ONE concrete, actionable next step the salesperson should take. '
-            .'Respond ONLY with JSON: {"type":"follow_up|discount|close_now|escalate|re_engage|schedule_call","rationale":"brief explanation in 1-2 sentences"}. '
-            .'Be concise and specific. Do not include markdown formatting.';
+            .'Respond ONLY with valid JSON using exactly this structure: '
+            .'{"type":"<TYPE>","rationale":"<1-2 sentence explanation>"}. '
+            .'The type field MUST be exactly one of these values: follow_up, discount, close_now, escalate, re_engage, schedule_call. '
+            .'No markdown. No code fences. No extra fields.';
     }
 
     private function buildDealContext(Deal $deal): array
@@ -167,9 +181,11 @@ class AiSalesAgentService
         }
 
         $validTypes = ['follow_up', 'discount', 'close_now', 'escalate', 're_engage', 'schedule_call'];
-        if (!isset($decoded['type']) || !in_array($decoded['type'], $validTypes)) {
+        $type = strtolower(trim($decoded['type'] ?? ''));
+        if (!in_array($type, $validTypes, true)) {
             return null;
         }
+        $decoded['type'] = $type;
 
         if (empty($decoded['rationale'])) {
             return null;

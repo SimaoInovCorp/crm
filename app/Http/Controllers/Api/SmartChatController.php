@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AiSuggestion\SmartChatRequest;
 use App\Services\SmartChatService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SmartChatController extends Controller
@@ -49,7 +49,12 @@ class SmartChatController extends Controller
             return $this->stream($tenant, $messages);
         }
 
-        $result = $this->chatService->chat($tenant, $messages);
+        try {
+            $result = $this->chatService->chat($tenant, $messages);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'AI service error: ' . $e->getMessage()], 502);
+        }
+
         return response()->json($result);
     }
 
@@ -67,23 +72,28 @@ class SmartChatController extends Controller
     private function stream($tenant, array $messages): StreamedResponse
     {
         return response()->stream(function () use ($tenant, $messages) {
-            $buffer = '';
-            foreach ($this->chatService->chatStream($tenant, $messages) as $chunk) {
-                $buffer .= $chunk;
-                echo "data: " . json_encode(['chunk' => $chunk]) . "\n\n";
+            try {
+                $buffer = '';
+                foreach ($this->chatService->chatStream($tenant, $messages) as $chunk) {
+                    $buffer .= $chunk;
+                    echo "data: " . json_encode(['chunk' => $chunk]) . "\n\n";
+                    if (ob_get_level()) {
+                        ob_flush();
+                    }
+                    flush();
+                }
+
+                // Process the full response for potential query execution
+                $processed = $this->chatService->processStreamedResponse($tenant->id, $buffer);
+                echo "data: " . json_encode(['done' => true, 'result' => $processed]) . "\n\n";
+            } catch (\Throwable $e) {
+                echo "data: " . json_encode(['error' => 'AI service error: ' . $e->getMessage()]) . "\n\n";
+            } finally {
                 if (ob_get_level()) {
                     ob_flush();
                 }
                 flush();
             }
-
-            // Process the full response for potential query execution
-            $processed = $this->chatService->processStreamedResponse($tenant->id, $buffer);
-            echo "data: " . json_encode(['done' => true, 'result' => $processed]) . "\n\n";
-            if (ob_get_level()) {
-                ob_flush();
-            }
-            flush();
         }, 200, [
             'Content-Type'  => 'text/event-stream',
             'Cache-Control' => 'no-cache',

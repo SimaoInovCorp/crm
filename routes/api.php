@@ -92,6 +92,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
 
     // AI Suggestions
     Route::get('ai-suggestions', [AiSuggestionController::class, 'index'])->name('ai-suggestions.index');
+    Route::post('ai-suggestions/generate', [AiSuggestionController::class, 'generate'])->name('ai-suggestions.generate');
     Route::post('ai-suggestions/{aiSuggestion}/accept', [AiSuggestionController::class, 'accept'])->name('ai-suggestions.accept');
     Route::post('ai-suggestions/{aiSuggestion}/dismiss', [AiSuggestionController::class, 'dismiss'])->name('ai-suggestions.dismiss');
     Route::post('ai-suggestions/{aiSuggestion}/postpone', [AiSuggestionController::class, 'postpone'])->name('ai-suggestions.postpone');

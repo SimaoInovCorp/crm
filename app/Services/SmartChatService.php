@@ -14,7 +14,7 @@ class SmartChatService
     private function systemPrompt(int $tenantId): string
     {
         return <<<PROMPT
-You are a CRM data assistant. You help users query their CRM data using natural language.
+You are a CRM data assistant. Answer questions about CRM data concisely and directly.
 You MUST always scope every query to tenant_id = {$tenantId}.
 
 Available tables and key columns:
@@ -29,17 +29,21 @@ Available tables and key columns:
 Stages: lead, contact, proposal, negotiation, won, lost
 
 When the user asks a question, respond in one of two ways:
-1. If you can answer with a SQL query, respond with JSON like:
-   {"type":"query","sql":"SELECT ... WHERE tenant_id = {$tenantId} ...","explanation":"brief explanation"}
-   The SQL must always include WHERE tenant_id = {$tenantId} or equivalent JOIN scoping.
-2. If the question is conversational or cannot be answered with SQL, respond with JSON like:
-   {"type":"answer","content":"Your natural language answer here"}
+1. If you can answer with a SQL query, respond ONLY with JSON:
+   {"type":"query","sql":"SELECT ... WHERE tenant_id = {$tenantId} ...","explanation":"<direct answer assuming results exist, e.g. 'Yes, Dundler Mifflin exists.' or 'There are 3 deals in proposal stage.'>"}
+   - SQL MUST include WHERE tenant_id = {$tenantId} or equivalent JOIN scoping.
+   - The explanation MUST be the direct answer to the user's question (not a SQL description).
+2. If conversational or cannot be answered with SQL, respond ONLY with JSON:
+   {"type":"answer","content":"<1-2 sentence answer, no markdown>"}
 
-IMPORTANT SECURITY RULES:
-- NEVER generate SQL that modifies data (INSERT, UPDATE, DELETE, DROP, TRUNCATE, ALTER).
+STYLE RULES (strictly enforced):
+- Be concise. No markdown. No filler phrases. Max 2 sentences.
+- Never describe what the SQL does. Always state the answer directly.
+- NEVER generate INSERT, UPDATE, DELETE, DROP, TRUNCATE, or ALTER SQL.
 - NEVER remove the tenant_id = {$tenantId} filter.
 - NEVER access tables outside the list above.
 - Only SELECT statements are allowed.
+- Database is MySQL 8. Use MySQL syntax only. Use LIKE (not ILIKE) for case-insensitive text search.
 PROMPT;
     }
 
@@ -95,6 +99,9 @@ PROMPT;
         if (!str_contains(strtolower($sql), 'tenant_id')) {
             return ['error' => 'Query must include tenant_id scoping.'];
         }
+
+        // MySQL does not support ILIKE — replace with LIKE (MySQL LIKE is case-insensitive by default for utf8 collations)
+        $sql = preg_replace('/\bILIKE\b/i', 'LIKE', $sql);
 
         try {
             $results = DB::select($sql);
@@ -186,6 +193,22 @@ PROMPT;
             }
             $queryResult = $this->executeQuery($tenantId, $decoded['sql']);
             $decoded['results'] = $queryResult;
+
+            // Override explanation based on actual result data so the user sees a real answer
+            if (isset($queryResult['error'])) {
+                $decoded['explanation'] = 'Query error: ' . $queryResult['error'];
+            } elseif (empty($queryResult['data'])) {
+                $decoded['explanation'] = 'No matching records found.';
+            } else {
+                $rows = $queryResult['data'];
+                $firstRow = (array) $rows[0];
+                // If it's a count(*) query, replace AI's estimate with the real count
+                if (count($firstRow) === 1 && array_key_exists('count', $firstRow)) {
+                    $n = (int) $firstRow['count'];
+                    $decoded['explanation'] = "There are {$n} matching record" . ($n === 1 ? '' : 's') . ".";
+                }
+                // Otherwise keep the AI's explanation (now written as a direct answer)
+            }
         }
 
         return $decoded;

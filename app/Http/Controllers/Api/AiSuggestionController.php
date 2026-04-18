@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AiSuggestion\PostponeAiSuggestionRequest;
 use App\Http\Resources\AiSuggestionResource;
 use App\Models\AiSuggestion;
+use App\Models\Tenant;
 use App\Services\AiSalesAgentService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -45,5 +47,30 @@ class AiSuggestionController extends Controller
         $days = $request->validated('days', 3);
         $suggestion = $this->service->postpone($aiSuggestion, $days);
         return new AiSuggestionResource($suggestion);
+    }
+
+    /**
+     * Trigger AI analysis of all open deals and generate suggestions.
+     */
+    public function generate(): JsonResponse
+    {
+        $this->authorize('viewAny', AiSuggestion::class);
+
+        $tenant = app('current.tenant');
+
+        try {
+            $result = $this->service->analyzeDeals($tenant);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'AI service error: ' . $e->getMessage()], 502);
+        }
+
+        $noun = $result['created'] === 1 ? 'suggestion' : 'suggestions';
+
+        return response()->json([
+            'message' => "Generated {$result['created']} AI {$noun} for {$result['total']} open deal(s).",
+            'created' => $result['created'],
+            'failed'  => $result['failed'],
+            'total'   => $result['total'],
+        ]);
     }
 }
