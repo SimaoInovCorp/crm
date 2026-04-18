@@ -20,8 +20,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import type { Entity, EntityStatus, PaginatedResponse } from '@/types';
 import { useFormErrors } from '@/composables/useFormErrors';
+import type { Entity, EntityStatus, PaginatedResponse } from '@/types';
 
 defineOptions({
     layout: {
@@ -117,8 +117,15 @@ onMounted(() => fetchEntities());
 
 function exportCsv() {
     const params = new URLSearchParams();
-    if (search.value) params.set('search', search.value);
-    if (statusFilter.value) params.set('status', statusFilter.value);
+
+    if (search.value) {
+params.set('search', search.value);
+}
+
+    if (statusFilter.value) {
+params.set('status', statusFilter.value);
+}
+
     window.location.href = `/api/entities/export?${params.toString()}`;
 }
 

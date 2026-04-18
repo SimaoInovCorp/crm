@@ -19,8 +19,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import type { Entity, Person, PaginatedResponse } from '@/types';
 import { useFormErrors } from '@/composables/useFormErrors';
+import type { Entity, Person, PaginatedResponse } from '@/types';
 
 defineOptions({
     layout: {
@@ -122,8 +122,15 @@ onMounted(() => {
 
 function exportCsv() {
     const params = new URLSearchParams();
-    if (search.value) params.set('search', search.value);
-    if (entityFilter.value) params.set('entity_id', entityFilter.value);
+
+    if (search.value) {
+params.set('search', search.value);
+}
+
+    if (entityFilter.value) {
+params.set('entity_id', entityFilter.value);
+}
+
     window.location.href = `/api/people/export?${params.toString()}`;
 }
 

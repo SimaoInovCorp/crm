@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import { Toaster } from 'vue-sonner';
 import AppContent from '@/components/AppContent.vue';
 import AppShell from '@/components/AppShell.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
-import { Toaster } from 'vue-sonner';
 import type { BreadcrumbItem } from '@/types';
 
 type Props = {

@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
     Select,
     SelectContent,
@@ -21,6 +20,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { useFormErrors } from '@/composables/useFormErrors';
 import { useProductLines } from '@/composables/useProductLines';
 
@@ -231,8 +231,15 @@ onMounted(() => {
 
 function exportCsv() {
     const params = new URLSearchParams();
-    if (search.value) params.set('search', search.value);
-    if (stageFilter.value) params.set('stage', stageFilter.value);
+
+    if (search.value) {
+params.set('search', search.value);
+}
+
+    if (stageFilter.value) {
+params.set('stage', stageFilter.value);
+}
+
     window.location.href = `/api/deals/export?${params.toString()}`;
 }
 
@@ -341,7 +348,10 @@ function confirmDeleteDeal(deal: Deal) {
 }
 
 async function deleteDeal() {
-    if (!dealToDelete.value) return;
+    if (!dealToDelete.value) {
+return;
+}
+
     const deal = dealToDelete.value;
     deletingDealId.value = deal.id;
     showDeleteModal.value = false;

@@ -166,7 +166,9 @@ const selectedTemplate = computed(() =>
         : null,
 );
 watch(selectedTemplate, (t) => {
-    if (t) customEmailBody.value = t.body;
+    if (t) {
+customEmailBody.value = t.body;
+}
 });
 
 // People list for contact selector
@@ -203,8 +205,12 @@ function cancelEditProducts() {
     editingProducts.value = false;
 }
 async function saveProducts() {
-    if (!deal.value) return;
+    if (!deal.value) {
+return;
+}
+
     syncingProducts.value = true;
+
     try {
         const valid = productLines.value.filter((p) => p.product_id);
         const { data } = await axios.put(`/api/deals/${deal.value.id}`, {
@@ -373,19 +379,24 @@ async function sendNow() {
 
     try {
         const payload: Record<string, string | number> = {};
+
         if (selectedTemplateId.value) {
             payload.email_template_id = selectedTemplateId.value;
         }
+
         if (customEmailBody.value.trim()) {
             payload.body = customEmailBody.value.trim();
         }
+
         const { data } = await axios.post(
             `/api/deals/${dealId}/follow-up/send-now`,
             payload,
         );
+
         if (data.data) {
             followUp.value = data.data;
         }
+
         sendNowSuccess.value = data.message ?? 'Email sent successfully.';
     } catch (err: any) {
         sendNowError.value =
@@ -396,7 +407,9 @@ async function sendNow() {
 }
 
 async function updateContact() {
-    if (!deal.value) return;
+    if (!deal.value) {
+return;
+}
 
     try {
         await axios.put(`/api/deals/${deal.value.id}`, {

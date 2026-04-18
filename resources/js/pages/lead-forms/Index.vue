@@ -4,8 +4,6 @@ import axios from 'axios';
 import { ref, onMounted } from 'vue';
 import { toast } from 'vue-sonner';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import {
     Dialog,
     DialogContent,
@@ -14,6 +12,8 @@ import {
     DialogFooter,
     DialogDescription,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 
 interface FieldDef {
     label: string;
@@ -48,7 +48,7 @@ const selectedForm = ref<LeadForm | null>(null);
 const submissions = ref<Submission[]>([]);
 const submissionsLoading = ref(false);
 
-const FIELD_TYPES = ['text', 'email', 'phone', 'textarea', 'number'];
+// const FIELD_TYPES = ['text', 'email', 'phone', 'textarea', 'number'];
 
 async function fetchForms() {
     const { data } = await axios.get('/api/lead-forms');
@@ -106,7 +106,10 @@ function confirmRemove(f: LeadForm) {
 }
 
 async function remove() {
-    if (!formToDelete.value) return;
+    if (!formToDelete.value) {
+        return;
+    }
+
     await axios.delete(`/api/lead-forms/${formToDelete.value.id}`);
     showDeleteModal.value = false;
     formToDelete.value = null;
@@ -126,6 +129,7 @@ function embedCode(f: LeadForm): string {
 
     // Build a field example object from the form's own fields
     const exampleFields: Record<string, string> = {};
+
     if (f.fields.length) {
         f.fields.forEach((field) => {
             exampleFields[field.label] =
@@ -163,14 +167,18 @@ function openEmbedDialog(f: LeadForm) {
 async function copyEmbedCode() {
     if (embedTextareaRef.value) {
         embedTextareaRef.value.select();
+
         try {
             document.execCommand('copy');
             toast.success('Code copied to clipboard!');
+
             return;
         } catch {}
     }
+
     // fallback: try navigator.clipboard
     const code = embedDialogForm.value ? embedCode(embedDialogForm.value) : '';
+
     try {
         if (navigator.clipboard && window.isSecureContext) {
             await navigator.clipboard.writeText(code);

@@ -2,7 +2,6 @@
 import { Head } from '@inertiajs/vue3';
 import axios from 'axios';
 import { ref, reactive, computed, onMounted, watch } from 'vue';
-import { useCsvExport } from '@/composables/useCsvExport';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,6 +19,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useCsvExport } from '@/composables/useCsvExport';
 
 defineOptions({
     layout: {

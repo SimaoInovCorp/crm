@@ -56,6 +56,7 @@ const deleting = ref(false);
 
 async function fetchProducts() {
     loading.value = true;
+
     try {
         const { data } = await axios.get('/api/products', {
             params: { per_page: 200 },
@@ -77,6 +78,7 @@ function openCreate() {
 async function submitCreate() {
     saving.value = true;
     clearErrors();
+
     try {
         await axios.post('/api/products', form.value);
         showCreateModal.value = false;
@@ -100,9 +102,13 @@ function openEdit(product: Product) {
 }
 
 async function submitEdit() {
-    if (!editingProduct.value) return;
+    if (!editingProduct.value) {
+return;
+}
+
     saving.value = true;
     clearErrors();
+
     try {
         await axios.put(
             `/api/products/${editingProduct.value.id}`,
@@ -123,8 +129,12 @@ function confirmDelete(product: Product) {
 }
 
 async function deleteProduct() {
-    if (!productToDelete.value) return;
+    if (!productToDelete.value) {
+return;
+}
+
     deleting.value = true;
+
     try {
         await axios.delete(`/api/products/${productToDelete.value.id}`);
         showDeleteModal.value = false;
@@ -138,7 +148,10 @@ async function deleteProduct() {
 }
 
 function fmt(price: string | null) {
-    if (!price) return '—';
+    if (!price) {
+return '—';
+}
+
     return new Intl.NumberFormat('pt-PT', {
         style: 'currency',
         currency: 'EUR',

@@ -20,6 +20,7 @@ export function useFormErrors() {
             Object.keys(errs).forEach(
                 (k) => (formErrors.value[k] = errs[k][0]),
             );
+
             return true;
         }
 

@@ -4,8 +4,6 @@ import axios from 'axios';
 import { ref, onMounted } from 'vue';
 import { toast } from 'vue-sonner';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import {
     Dialog,
     DialogContent,
@@ -13,6 +11,8 @@ import {
     DialogTitle,
     DialogFooter,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 
 interface Rule {
     id: number;
@@ -125,19 +125,25 @@ function removeAction(idx: number) {
 async function save() {
     if (!form.value.name.trim()) {
         toast.error('Please enter a rule name.');
+
         return;
     }
+
     if (!actions.value.length) {
         toast.error('Please add at least one action.');
+
         return;
     }
+
     saving.value = true;
+
     try {
         const payload = {
             ...form.value,
             conditions: conditions.value,
             actions: actions.value,
         };
+
         if (editing.value) {
             await axios.put(
                 `/api/automation-rules/${editing.value.id}`,
@@ -146,6 +152,7 @@ async function save() {
         } else {
             await axios.post('/api/automation-rules', payload);
         }
+
         showForm.value = false;
         toast.success('Rule saved successfully!');
         await fetchRules();
@@ -172,7 +179,10 @@ function confirmRemove(r: Rule) {
 }
 
 async function remove() {
-    if (!ruleToDelete.value) return;
+    if (!ruleToDelete.value) {
+return;
+}
+
     await axios.delete(`/api/automation-rules/${ruleToDelete.value.id}`);
     showDeleteModal.value = false;
     ruleToDelete.value = null;

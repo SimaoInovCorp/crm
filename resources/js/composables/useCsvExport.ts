@@ -7,6 +7,7 @@ export function useCsvExport() {
         return values
             .map((v) => {
                 const s = (v == null ? '' : String(v)).replace(/"/g, '""');
+
                 return `"${s}"`;
             })
             .join(',');

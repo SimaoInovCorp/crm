@@ -37,6 +37,7 @@ export function useProductLines(allProducts: Ref<ProductOption[]>) {
     function onProductSelect(idx: number, productId: string): void {
         productLines.value[idx].product_id = productId;
         const p = allProducts.value.find((x) => String(x.id) === productId);
+
         if (p?.price) {
             productLines.value[idx].unit_price = parseFloat(p.price);
         }

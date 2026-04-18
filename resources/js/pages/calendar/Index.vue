@@ -341,6 +341,7 @@ function requestDeleteEvent() {
 async function sendInvoice() {
     sendingInvoice.value = true;
     invoiceMessage.value = null;
+
     try {
         const { data } = await axios.post(
             `/api/calendar-events/${editForm.value.id}/send-invoice`,

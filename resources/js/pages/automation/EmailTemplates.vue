@@ -3,6 +3,13 @@ import { Head } from '@inertiajs/vue3';
 import axios from 'axios';
 import { ref, onMounted } from 'vue';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -12,13 +19,6 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from '@/components/ui/dialog';
 
 interface Template {
     id: number;
@@ -88,7 +88,10 @@ function confirmRemove(t: Template) {
 }
 
 async function remove() {
-    if (!templateToDelete.value) return;
+    if (!templateToDelete.value) {
+return;
+}
+
     await axios.delete(`/api/email-templates/${templateToDelete.value.id}`);
     showDeleteModal.value = false;
     templateToDelete.value = null;
