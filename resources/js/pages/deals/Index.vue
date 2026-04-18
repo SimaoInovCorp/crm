@@ -21,6 +21,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useFormErrors } from '@/composables/useFormErrors';
+import { useProductLines } from '@/composables/useProductLines';
 
 defineOptions({
     layout: { breadcrumbs: [{ title: 'Deals', href: '/deals' }] },
@@ -99,12 +101,6 @@ interface Product {
     price: string | null;
 }
 
-interface DealProductLine {
-    product_id: string;
-    quantity: number;
-    unit_price: number;
-}
-
 interface DealDetail extends Deal {
     notes: string | null;
     person: { id: number; name: string } | null;
@@ -130,7 +126,7 @@ const stageFilter = ref<Stage | ''>('');
 // ─── Create modal ─────────────────────────────────────────────────────────────
 const showCreateModal = ref(false);
 const saving = ref(false);
-const formErrors = ref<Record<string, string>>({});
+const { formErrors, extractErrors, clearErrors } = useFormErrors();
 const form = ref({
     title: '',
     entity_id: '',
@@ -140,25 +136,13 @@ const form = ref({
     expected_close_date: '',
     notes: '',
 });
-const formProducts = ref<DealProductLine[]>([]);
-
-const formProductsTotal = computed(() =>
-    formProducts.value.reduce((s, p) => s + p.quantity * p.unit_price, 0),
-);
-
-function addProductLine() {
-    formProducts.value.push({ product_id: '', quantity: 1, unit_price: 0 });
-}
-function removeProductLine(idx: number) {
-    formProducts.value.splice(idx, 1);
-}
-function onProductSelect(idx: number, productId: string) {
-    formProducts.value[idx].product_id = productId;
-    const p = allProducts.value.find((x) => String(x.id) === productId);
-    if (p && p.price) {
-        formProducts.value[idx].unit_price = parseFloat(p.price);
-    }
-}
+const {
+    productLines: formProducts,
+    productLinesTotal: formProductsTotal,
+    addProductLine,
+    removeProductLine,
+    onProductSelect,
+} = useProductLines(allProducts);
 
 // People filtered by selected entity
 const entityPeople = computed(() =>
@@ -295,13 +279,13 @@ function openCreate() {
         notes: '',
     };
     formProducts.value = [];
-    formErrors.value = {};
+    clearErrors();
     showCreateModal.value = true;
 }
 
 async function submitCreate() {
     saving.value = true;
-    formErrors.value = {};
+    clearErrors();
 
     const validProducts = formProducts.value.filter((p) => p.product_id);
 
@@ -316,13 +300,8 @@ async function submitCreate() {
         });
         showCreateModal.value = false;
         await fetchDeals();
-    } catch (err: any) {
-        if (err.response?.status === 422) {
-            const errs = err.response.data.errors as Record<string, string[]>;
-            Object.keys(errs).forEach(
-                (k) => (formErrors.value[k] = errs[k][0]),
-            );
-        }
+    } catch (err: unknown) {
+        extractErrors(err);
     } finally {
         saving.value = false;
     }

@@ -21,6 +21,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import type { Entity, EntityStatus, PaginatedResponse } from '@/types';
+import { useFormErrors } from '@/composables/useFormErrors';
 
 defineOptions({
     layout: {
@@ -61,7 +62,7 @@ const showDeleteModal = ref(false);
 const editingEntity = ref<Entity | null>(null);
 const deletingEntity = ref<Entity | null>(null);
 const saving = ref(false);
-const formErrors = ref<Record<string, string>>({});
+const { formErrors, extractErrors, clearErrors } = useFormErrors();
 
 const form = reactive({
     name: '',
@@ -79,7 +80,7 @@ function resetForm() {
     form.phone = '';
     form.address = '';
     form.status = 'prospect';
-    formErrors.value = {};
+    clearErrors();
 }
 
 // ─── Fetch ────────────────────────────────────────────────────────────────────
@@ -135,21 +136,17 @@ function openCreate() {
 
 async function submitCreate() {
     saving.value = true;
-    formErrors.value = {};
+    clearErrors();
 
     try {
         await axios.post('/api/entities', form);
         showCreateModal.value = false;
         fetchEntities();
-    } catch (e: any) {
-        if (e.response?.status === 422) {
-            const errs = e.response.data.errors as Record<string, string[]>;
-            Object.keys(errs).forEach(
-                (k) => (formErrors.value[k] = errs[k][0]),
-            );
-        } else {
+    } catch (e: unknown) {
+        if (!extractErrors(e)) {
             error.value =
-                e.response?.data?.message ?? 'Failed to create entity.';
+                (e as any)?.response?.data?.message ??
+                'Failed to create entity.';
         }
     } finally {
         saving.value = false;
@@ -165,7 +162,7 @@ function openEdit(entity: Entity) {
     form.phone = entity.phone ?? '';
     form.address = entity.address ?? '';
     form.status = entity.status;
-    formErrors.value = {};
+    clearErrors();
     showEditModal.value = true;
 }
 
@@ -175,21 +172,17 @@ async function submitEdit() {
     }
 
     saving.value = true;
-    formErrors.value = {};
+    clearErrors();
 
     try {
         await axios.put(`/api/entities/${editingEntity.value.id}`, form);
         showEditModal.value = false;
         fetchEntities();
-    } catch (e: any) {
-        if (e.response?.status === 422) {
-            const errs = e.response.data.errors as Record<string, string[]>;
-            Object.keys(errs).forEach(
-                (k) => (formErrors.value[k] = errs[k][0]),
-            );
-        } else {
+    } catch (e: unknown) {
+        if (!extractErrors(e)) {
             error.value =
-                e.response?.data?.message ?? 'Failed to update entity.';
+                (e as any)?.response?.data?.message ??
+                'Failed to update entity.';
         }
     } finally {
         saving.value = false;

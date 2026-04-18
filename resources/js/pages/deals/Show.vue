@@ -14,6 +14,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useProductLines } from '@/composables/useProductLines';
 
 defineOptions({
     layout: {
@@ -176,25 +177,19 @@ const editingContact = ref(false);
 const selectedPersonId = ref<string>('');
 
 // ─── Products ─────────────────────────────────────────────────────────────
-interface ProductOption {
-    id: number;
-    name: string;
-    price: string | null;
-}
-interface ProductLine {
-    product_id: string;
-    quantity: number;
-    unit_price: number;
-}
-
-const allProducts = ref<ProductOption[]>([]);
+const allProducts = ref<{ id: number; name: string; price: string | null }[]>(
+    [],
+);
 const editingProducts = ref(false);
-const productLines = ref<ProductLine[]>([]);
 const syncingProducts = ref(false);
 
-const productLinesTotal = computed(() =>
-    productLines.value.reduce((s, p) => s + p.quantity * p.unit_price, 0),
-);
+const {
+    productLines,
+    productLinesTotal,
+    addProductLine,
+    removeProductLine,
+    onProductSelect,
+} = useProductLines(allProducts);
 
 function startEditProducts() {
     productLines.value = (deal.value?.products ?? []).map((p) => ({
@@ -206,17 +201,6 @@ function startEditProducts() {
 }
 function cancelEditProducts() {
     editingProducts.value = false;
-}
-function addProductLine() {
-    productLines.value.push({ product_id: '', quantity: 1, unit_price: 0 });
-}
-function removeProductLine(idx: number) {
-    productLines.value.splice(idx, 1);
-}
-function onProductSelect(idx: number, productId: string) {
-    productLines.value[idx].product_id = productId;
-    const p = allProducts.value.find((x) => String(x.id) === productId);
-    if (p && p.price) productLines.value[idx].unit_price = parseFloat(p.price);
 }
 async function saveProducts() {
     if (!deal.value) return;

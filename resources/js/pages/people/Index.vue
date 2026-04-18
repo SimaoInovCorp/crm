@@ -20,6 +20,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import type { Entity, Person, PaginatedResponse } from '@/types';
+import { useFormErrors } from '@/composables/useFormErrors';
 
 defineOptions({
     layout: {
@@ -51,7 +52,7 @@ const showDeleteModal = ref(false);
 const editingPerson = ref<Person | null>(null);
 const deletingPerson = ref<Person | null>(null);
 const saving = ref(false);
-const formErrors = ref<Record<string, string>>({});
+const { formErrors, extractErrors, clearErrors } = useFormErrors();
 
 const form = reactive({
     name: '',
@@ -69,7 +70,7 @@ function resetForm() {
     form.phone = '';
     form.position = '';
     form.notes = '';
-    formErrors.value = {};
+    clearErrors();
 }
 
 // ─── Fetch ────────────────────────────────────────────────────────────────────
@@ -145,22 +146,18 @@ function openCreate() {
 
 async function submitCreate() {
     saving.value = true;
-    formErrors.value = {};
+    clearErrors();
 
     try {
         const payload = { ...form, entity_id: form.entity_id || null };
         await axios.post('/api/people', payload);
         showCreateModal.value = false;
         fetchPeople();
-    } catch (e: any) {
-        if (e.response?.status === 422) {
-            const errs = e.response.data.errors as Record<string, string[]>;
-            Object.keys(errs).forEach(
-                (k) => (formErrors.value[k] = errs[k][0]),
-            );
-        } else {
+    } catch (e: unknown) {
+        if (!extractErrors(e)) {
             error.value =
-                e.response?.data?.message ?? 'Failed to create person.';
+                (e as any)?.response?.data?.message ??
+                'Failed to create person.';
         }
     } finally {
         saving.value = false;
@@ -176,7 +173,7 @@ function openEdit(person: Person) {
     form.phone = person.phone ?? '';
     form.position = person.position ?? '';
     form.notes = person.notes ?? '';
-    formErrors.value = {};
+    clearErrors();
     showEditModal.value = true;
 }
 
@@ -186,22 +183,18 @@ async function submitEdit() {
     }
 
     saving.value = true;
-    formErrors.value = {};
+    clearErrors();
 
     try {
         const payload = { ...form, entity_id: form.entity_id || null };
         await axios.put(`/api/people/${editingPerson.value.id}`, payload);
         showEditModal.value = false;
         fetchPeople();
-    } catch (e: any) {
-        if (e.response?.status === 422) {
-            const errs = e.response.data.errors as Record<string, string[]>;
-            Object.keys(errs).forEach(
-                (k) => (formErrors.value[k] = errs[k][0]),
-            );
-        } else {
+    } catch (e: unknown) {
+        if (!extractErrors(e)) {
             error.value =
-                e.response?.data?.message ?? 'Failed to update person.';
+                (e as any)?.response?.data?.message ??
+                'Failed to update person.';
         }
     } finally {
         saving.value = false;

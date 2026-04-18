@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { Entity, Person } from '@/types';
+import { useEmailModal } from '@/composables/useEmailModal';
 
 defineOptions({
     layout: {
@@ -46,11 +47,18 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 
 // ─── Email ────────────────────────────────────────────────────────────────────
-const showEmailModal = ref(false);
-const emailForm = ref({ subject: '', body: '' });
-const sendingEmail = ref(false);
-const emailSuccess = ref<string | null>(null);
-const emailError = ref<string | null>(null);
+const {
+    showEmailModal,
+    emailForm,
+    sendingEmail,
+    emailSuccess,
+    emailError,
+    openEmailModal,
+    sendEmail,
+} = useEmailModal(
+    () => `/api/entities/${entityId}/email`,
+    () => entity.value?.email ?? '',
+);
 
 async function fetchEntity() {
     loading.value = true;
@@ -75,36 +83,6 @@ async function fetchEntity() {
         error.value = e.response?.data?.message ?? 'Failed to load entity.';
     } finally {
         loading.value = false;
-    }
-}
-
-function openEmailModal() {
-    emailForm.value = { subject: '', body: '' };
-    emailSuccess.value = null;
-    emailError.value = null;
-    showEmailModal.value = true;
-}
-
-async function sendEmail() {
-    if (!emailForm.value.subject.trim() || !emailForm.value.body.trim()) {
-        return;
-    }
-
-    sendingEmail.value = true;
-    emailSuccess.value = null;
-    emailError.value = null;
-
-    try {
-        await axios.post(`/api/entities/${entityId}/email`, {
-            subject: emailForm.value.subject,
-            body: emailForm.value.body,
-        });
-        emailSuccess.value = `Email sent to ${entity.value?.email} successfully.`;
-        emailForm.value = { subject: '', body: '' };
-    } catch (e: any) {
-        emailError.value = e.response?.data?.message ?? 'Failed to send email.';
-    } finally {
-        sendingEmail.value = false;
     }
 }
 
